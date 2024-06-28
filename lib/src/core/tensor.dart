@@ -4,9 +4,11 @@ class Tensor {
   List<double> data;
   List<int> shape;
   late List<int> strides;
+  late int size;
 
   Tensor(this.data, this.shape) {
     _computeStrides();
+    size = data.length;
   }
 
   void _computeStrides() {
@@ -21,9 +23,17 @@ class Tensor {
     return Tensor(List<double>.filled(size, 0.0), shape);
   }
 
+  factory Tensor.zeroslike(Tensor tensor){
+    return Tensor.zeros(tensor.shape);
+  }
+  
+  factory Tensor.oneslike(Tensor tensor){
+    return Tensor.ones(tensor.shape);
+  }
+
   factory Tensor.ones(List<int> shape) {
     int size = shape.reduce((a, b) => a * b);
-    return Tensor(List<double>.filled(size, 0.1), shape);
+    return Tensor(List<double>.filled(size, 1.0), shape);
   }
 
   factory Tensor.random(List<int> shape) {
@@ -31,7 +41,6 @@ class Tensor {
     var rng = math.Random();
     return Tensor(List<double>.generate(size, (_) => rng.nextDouble()), shape);
   }
-  int get size => data.length;
 
   double operator [](List<int> indices) {
     int flatIndex = _flattenIndices(indices);
@@ -49,6 +58,9 @@ class Tensor {
     }
     int flatIndex = 0;
     for (int i = 0; i < indices.length; i++) {
+      if (indices[i] < 0 || indices[i] >= shape[i]) {
+        throw ArgumentError('Index out of range');
+      }
       flatIndex += indices[i] * strides[i];
     }
     return flatIndex;
@@ -81,8 +93,59 @@ class Tensor {
     return Tensor(resultData, shape);
   }
 
-  @override
+  Tensor subtract(Tensor other) {
+    if (!_areShapesEqual(shape, other.shape)) {
+      throw ArgumentError('Tensors must have the same shape for subtraction');
+    }
+    var resultData =
+        List<double>.generate(size, (i) => data[i] - other.data[i]);
+    return Tensor(resultData, shape);
+  }
+
+
+  Tensor matmul(Tensor other) {
+    if (shape.length != 2 || other.shape.length != 2) {
+      throw ArgumentError(
+          'Matrix multiplication is only defined for 2D tensors');
+    }
+    if (shape[1] != other.shape[0]) {
+      throw ArgumentError(
+          'Inner tensor dimensions must match for matrix multiplication');
+    }
+    var resultShape = [shape[0], other.shape[1]];
+    var resultData = List<double>.filled(resultShape[0] * resultShape[1], 0.0);
+    for (int i = 0; i < shape[0]; i++) {
+      for (int j = 0; j < other.shape[1]; j++) {
+        double sum = 0.0;
+        for (int k = 0; k < shape[1]; k++) {
+          sum += this[[i, k]] * other[[k, j]];
+        }
+        resultData[i * resultShape[1] + j] = sum;
+      }
+    }
+    return Tensor(resultData, resultShape);
+  }
+
+@override
   String toString() {
-    return 'Tensor(shape: $shape, data: $data)';
+    var buffer = StringBuffer();
+    buffer.write('Tensor(array([');
+
+    for (int i = 0; i < shape[0]; i++) {
+      buffer.write('[');
+      for (int j = 0; j < shape[1]; j++) {
+        buffer.write(data[_flattenIndices([i, j])].toStringAsFixed(5));
+        if (j < shape[1] - 1) {
+          buffer.write(', ');
+        }
+      }
+      buffer.write(']');
+      if (i < shape[0] - 1) {
+        buffer.write(',\n       ');
+      }
+    }
+
+    buffer.write('], dtype=double)');
+    return buffer.toString();
   }
 }
