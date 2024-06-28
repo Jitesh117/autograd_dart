@@ -10,32 +10,33 @@ class Tensor {
     _computeStrides();
     size = data.length;
   }
-
+/// Compute the strides of the tensor.
   void _computeStrides() {
     strides = List<int>.filled(shape.length, 1);
     for (int i = shape.length - 2; i >= 0; i--) {
       strides[i] = strides[i + 1] * shape[i + 1];
     }
   }
-
+/// Creates a tensor of zeros with the given shape.
   factory Tensor.zeros(List<int> shape) {
     int size = shape.reduce((a, b) => a * b);
     return Tensor(List<double>.filled(size, 0.0), shape);
   }
-
-  factory Tensor.zeroslike(Tensor tensor){
+/// Creates a tensor of zeros with the same shape as the given tensor.
+  factory Tensor.zeroslike(Tensor tensor) {
     return Tensor.zeros(tensor.shape);
   }
-  
-  factory Tensor.oneslike(Tensor tensor){
+/// Creates a tensor of ones with the same shape as the given tensor.
+  factory Tensor.oneslike(Tensor tensor) {
     return Tensor.ones(tensor.shape);
   }
-
+/// Creates a tensor of ones with the given shape.
   factory Tensor.ones(List<int> shape) {
     int size = shape.reduce((a, b) => a * b);
     return Tensor(List<double>.filled(size, 1.0), shape);
   }
 
+  /// Creates a tensor with random values between 0 and 1 with the given shape.
   factory Tensor.random(List<int> shape) {
     int size = shape.reduce((a, b) => a * b);
     var rng = math.Random();
@@ -52,6 +53,7 @@ class Tensor {
     data[flatIndex] = value;
   }
 
+/// Flattens the indices of the tensor.
   int _flattenIndices(List<int> indices) {
     if (indices.length != shape.length) {
       throw ArgumentError('Indices must match tensor dimensions');
@@ -74,6 +76,7 @@ class Tensor {
     return true;
   }
 
+/// Adds two tensors element-wise.
   Tensor add(Tensor other) {
     if (!_areShapesEqual(shape, other.shape)) {
       throw ArgumentError('Tensors must have the same shape for addition');
@@ -83,6 +86,7 @@ class Tensor {
     return Tensor(resultData, shape);
   }
 
+/// Multiplies two tensors element-wise.
   Tensor multiply(Tensor other) {
     if (!_areShapesEqual(shape, other.shape)) {
       throw ArgumentError(
@@ -92,7 +96,7 @@ class Tensor {
         List<double>.generate(size, (i) => data[i] * other.data[i]);
     return Tensor(resultData, shape);
   }
-
+/// Subtracts two tensors element-wise.
   Tensor subtract(Tensor other) {
     if (!_areShapesEqual(shape, other.shape)) {
       throw ArgumentError('Tensors must have the same shape for subtraction');
@@ -101,8 +105,7 @@ class Tensor {
         List<double>.generate(size, (i) => data[i] - other.data[i]);
     return Tensor(resultData, shape);
   }
-
-
+/// Matrix multiplication of a tensor with a given tensor.
   Tensor matmul(Tensor other) {
     if (shape.length != 2 || other.shape.length != 2) {
       throw ArgumentError(
@@ -126,7 +129,7 @@ class Tensor {
     return Tensor(resultData, resultShape);
   }
 
-@override
+  @override
   String toString() {
     var buffer = StringBuffer();
     buffer.write('Tensor(array([');
