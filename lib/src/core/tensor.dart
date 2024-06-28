@@ -72,7 +72,16 @@ class Tensor {
     }
     return flatIndex;
   }
+/// UnFlattens the indices of the tensor.
+List<int> _unflattenIndex(int flatIndex) {
+  List<int> indices = List<int>.filled(shape.length, 0);
 
+  for (int i = 0; i < shape.length; i++) {
+    indices[i] = (flatIndex ~/ strides[i]) % shape[i];
+  }
+
+  return indices;
+}
   bool _areShapesEqual(List<int> shape1, List<int> shape2) {
     if (shape1.length != shape2.length) return false;
     for (int i = 0; i < shape1.length; i++) {
@@ -331,6 +340,70 @@ class Tensor {
 
     return rank;
   }
+
+//! Statistical Operations
+
+  /// Sum of the elments in the tensor
+  double sum() {
+    return data.reduce((a, b) => a + b);
+  }
+
+  /// Mean of the elements in the tensor
+  double mean() {
+    return sum() / size;
+  }
+
+  /// Variance of the elements in the tensor
+  double variance({bool population = false}) {
+    double meanValue = mean();
+    num sumSquaredDiff =
+        data.map((e) => math.pow(e - meanValue, 2)).reduce((a, b) => a + b);
+    return population ? sumSquaredDiff / size : sumSquaredDiff / (size - 1);
+  }
+
+  /// Standard Deviation of the elements in the tensor
+  double std({bool population = false}) {
+    return math.sqrt(variance(population: population));
+  }
+
+//! Aggregation Operations
+
+  /// Returns the maximum value in the tensor
+  double max() {
+    return data.reduce((a, b) => math.max(a, b));
+  }
+
+  /// Returns the minimumvalue in the tensor
+  double min() {
+    return data.reduce((a, b) => math.min(a, b));
+  }
+
+  /// Returns the index of the maximum value in the tensor
+  List<int> argmax() {
+    double maxValue = double.negativeInfinity;
+    List<int> maxIndex = [];
+    for (int i = 0; i < size; i++) {
+      if (data[i] > maxValue) {
+        maxValue = data[i];
+        maxIndex = _unflattenIndex(i);
+      }
+    }
+    return maxIndex;
+  }
+  
+  /// Returns the index of the minimum value in the tensor
+  List<int> argmin() {
+    double minValue = double.infinity;
+    List<int> minIndex = [];
+    for (int i = 0; i < size; i++) {
+      if (data[i] < minValue) {
+        minValue = data[i];
+        minIndex = _unflattenIndex(i);
+      }
+    }
+    return minIndex;
+  }
+
 
   @override
   String toString() {
