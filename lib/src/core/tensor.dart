@@ -58,7 +58,6 @@ class Tensor {
     data[flatIndex] = value;
   }
 
-  /// Flattens the indices of the tensor.
   int _flattenIndices(List<int> indices) {
     if (indices.length != shape.length) {
       throw ArgumentError('Indices must match tensor dimensions');
@@ -72,16 +71,18 @@ class Tensor {
     }
     return flatIndex;
   }
-/// UnFlattens the indices of the tensor.
-List<int> _unflattenIndex(int flatIndex) {
-  List<int> indices = List<int>.filled(shape.length, 0);
 
-  for (int i = 0; i < shape.length; i++) {
-    indices[i] = (flatIndex ~/ strides[i]) % shape[i];
+  /// UnFlattens the indices of the tensor.
+  List<int> _unflattenIndex(int flatIndex) {
+    List<int> indices = List<int>.filled(shape.length, 0);
+
+    for (int i = 0; i < shape.length; i++) {
+      indices[i] = (flatIndex ~/ strides[i]) % shape[i];
+    }
+
+    return indices;
   }
 
-  return indices;
-}
   bool _areShapesEqual(List<int> shape1, List<int> shape2) {
     if (shape1.length != shape2.length) return false;
     for (int i = 0; i < shape1.length; i++) {
@@ -390,7 +391,7 @@ List<int> _unflattenIndex(int flatIndex) {
     }
     return maxIndex;
   }
-  
+
   /// Returns the index of the minimum value in the tensor
   List<int> argmin() {
     double minValue = double.infinity;
@@ -404,27 +405,120 @@ List<int> _unflattenIndex(int flatIndex) {
     return minIndex;
   }
 
+  //! Reshaping Operations
+  /// Reshape the tensort into the desired shape
+  Tensor reshape(List<int> newShape) {
+    if (size != newShape.reduce((a, b) => a * b)) {
+      throw ArgumentError('New shape must have the same number of elements');
+    }
+    return Tensor(data, newShape);
+  }
 
-  @override
-  String toString() {
-    var buffer = StringBuffer();
-    buffer.write('Tensor([');
+  /// Flattens the tensor into a 1D tensor
+  Tensor flatten() {
+    return Tensor(data, [size]);
+  }
 
-    for (int i = 0; i < shape[0]; i++) {
-      buffer.write('[');
-      for (int j = 0; j < shape[1]; j++) {
-        buffer.write(data[_flattenIndices([i, j])].toStringAsFixed(5));
-        if (j < shape[1] - 1) {
-          buffer.write(', ');
-        }
+  //! Tensor Utilities
+
+  /// Checks if two tensors are equal (element-wise comparison)
+  bool equals(Tensor other) {
+    if (!_areShapesEqual(shape, other.shape)) {
+      return false;
+    }
+    for (int i = 0; i < size; i++) {
+      if (data[i] != other.data[i]) {
+        return false;
       }
-      buffer.write(']');
-      if (i < shape[0] - 1) {
-        buffer.write(',\n       ');
+    }
+    return true;
+  }
+
+//! Advanced Operations
+
+  /// Tensor concatenation along a given axis
+  Tensor concatenate(Tensor other, {int axis = 0}) {
+    if (axis < 0 || axis >= shape.length) {
+      throw ArgumentError('Axis out of range');
+    }
+    if (shape.length != other.shape.length) {
+      throw ArgumentError('Tensors must have the same number of dimensions');
+    }
+    for (int i = 0; i < shape.length; i++) {
+      if (i != axis && shape[i] != other.shape[i]) {
+        throw ArgumentError(
+            'Tensors must have the same shape except in the concatenation axis');
       }
     }
 
-    buffer.write('], dtype=double)');
-    return buffer.toString();
+    var newShape = List<int>.from(shape);
+    newShape[axis] += other.shape[axis];
+
+    var newData = List<double>.filled(newShape.reduce((a, b) => a * b), 0);
+
+    int stride = shape.sublist(axis + 1).fold(1, (a, b) => a * b);
+    int newStride = newShape.sublist(axis + 1).fold(1, (a, b) => a * b);
+
+    for (int i = 0; i < newData.length; i++) {
+      int oldIndex = i ~/ newStride * stride + i % newStride;
+      if (oldIndex < data.length) {
+        newData[i] = data[oldIndex];
+      } else {
+        newData[i] = other.data[oldIndex - data.length];
+      }
+    }
+
+    return Tensor(newData, newShape);
+  }
+
+  /// TODO: Tensor stacking along a given axis
+// Tensor stack(Tensor other, {int axis = 0}) {
+//   if (shape.length != other.shape.length) {
+//     throw ArgumentError('Tensors must have the same number of dimensions for stacking');
+//   }
+
+//   // Allow stacking along a new axis
+//   if (axis < 0 || axis > shape.length) {
+//     throw ArgumentError('Axis out of range');
+//   }
+
+//   var newShape = List<int>.from(shape);
+//   newShape.insert(axis, 2);  // We're stacking 2 tensors
+
+//   var newData = List<double>.filled(newShape.reduce((a, b) => a * b), 0);
+
+//   int preAxisSize = shape.sublist(0, axis).fold(1, (a, b) => a * b);
+//   int postAxisSize = shape.sublist(axis).fold(1, (a, b) => a * b);
+
+//   for (int i = 0; i < preAxisSize; i++) {
+//     for (int j = 0; j < postAxisSize; j++) {
+//       newData[i * postAxisSize * 2 + j] = data[i * postAxisSize + j];
+//       newData[i * postAxisSize * 2 + postAxisSize + j] = other.data[i * postAxisSize + j];
+//     }
+//   }
+
+//   return Tensor(newData, newShape);
+// }
+  @override
+  String toString() {
+    return 'Tensor(${_formatData()}, dtype=double)';
+  }
+
+  String _formatData() {
+    if (shape.length == 1) {
+      return '[${_formatRow(data)}]';
+    } else {
+      List<String> rows = [];
+      int rowSize = shape.last;
+      for (int i = 0; i < data.length; i += rowSize) {
+        rows.add(_formatRow(data.sublist(i, i + rowSize)));
+      }
+      String indent = ' ' * 7; // 7 spaces to align with 'Tensor('
+      return '[\n$indent${rows.join(',\n$indent')}\n]';
+    }
+  }
+
+  String _formatRow(List<double> row) {
+    return '[${row.map((e) => e.toStringAsFixed(5)).join(', ')}]';
   }
 }
