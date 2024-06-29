@@ -6,5 +6,6 @@ void main() {
   print(first);
   Tensor second = Tensor.random([2, 2, 2]);
   print(second);
-  print(first.concatenate(second));
+  print(first.stack(second, axis: 1).equals(first.concatenate(second)));
+  print(first.concatenate(second).equals(first.concatenate(second)));
 }
