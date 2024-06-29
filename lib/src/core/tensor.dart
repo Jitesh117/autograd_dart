@@ -375,6 +375,121 @@ class Tensor {
     return math.sqrt(variance(population: population));
   }
 
+  /// Power of the tensor element-wise to the given exponent
+  Tensor pow(double exponent) {
+    var resultData = List<double>.generate(
+        size, (i) => math.pow(data[i], exponent).toDouble());
+    return Tensor(resultData, shape);
+  }
+
+  /// Square root of the tensor element-wise
+  Tensor sqrt() {
+    var resultData = List<double>.generate(size, (i) => math.sqrt(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Exponential of the tensor element-wise
+  Tensor exp() {
+    var resultData = List<double>.generate(size, (i) => math.exp(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Logarithm of the tensor element-wise
+  Tensor log() {
+    var resultData = List<double>.generate(size, (i) => math.log(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Absolute value of the tensor element-wise
+  Tensor abs() {
+    var result = data.map((x) => x.abs()).toList();
+    return Tensor(result, shape);
+  }
+
+  /// Sign of the tensor element-wise
+  Tensor sign() {
+    var result = data.map((x) => x.sign).toList();
+    return Tensor(result, shape);
+  }
+
+//! Rounding Operations
+  /// Returns the largest integer less than or equal to the tensor element-wise
+  Tensor floor() {
+    var resultData =
+        List<double>.generate(size, (i) => data[i].floorToDouble());
+    return Tensor(resultData, shape);
+  }
+  /// Returns the smallest integer greater than or equal to the tensor element-wise
+  Tensor ceil() {
+    var resultData = List<double>.generate(size, (i) => data[i].ceilToDouble());
+    return Tensor(resultData, shape);
+  }
+  /// Round the tensor element-wise to the nearest integer
+  Tensor round() {
+    var resultData =
+        List<double>.generate(size, (i) => data[i].roundToDouble());
+    return Tensor(resultData, shape);
+  }
+
+//! Trignonometric Operations
+  /// Sine of the tensor element-wise
+  Tensor sin() {
+    var resultData = List<double>.generate(size, (i) => math.sin(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Cosine of the tensor element-wise
+  Tensor cos() {
+    var resultData = List<double>.generate(size, (i) => math.cos(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Tangent of the tensor element-wise
+  Tensor tan() {
+    var resultData = List<double>.generate(size, (i) => math.tan(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Arcsine of the tensor element-wise
+  Tensor asin() {
+    var resultData = List<double>.generate(size, (i) => math.asin(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Arccosine of the tensor element-wise
+  Tensor acos() {
+    var resultData = List<double>.generate(size, (i) => math.acos(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Arctangent of the tensor element-wise
+  Tensor atan() {
+    var resultData = List<double>.generate(size, (i) => math.atan(data[i]));
+    return Tensor(resultData, shape);
+  }
+
+  /// Hyperbolic Sine of the tensor element-wise
+  Tensor sinh() {
+    var result = data.map((x) => (math.exp(x) - math.exp(-x)) / 2).toList();
+    return Tensor(result, shape);
+  }
+
+  /// Hyperbolic Cosine of the tensor element-wise
+  Tensor cosh() {
+    var result = data.map((x) => (math.exp(x) + math.exp(-x)) / 2).toList();
+    return Tensor(result, shape);
+  }
+
+  /// Hyperbolic Tangent of the tensor element-wise
+  Tensor tanh() {
+    var result = data.map((x) {
+      double exp2x = math.exp(2 * x);
+      return (exp2x - 1) / (exp2x + 1);
+    }).toList();
+    return Tensor(result, shape);
+  }
+
+
 //! Aggregation Operations
 
   /// Returns the maximum value in the tensor
